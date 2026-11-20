@@ -82,7 +82,7 @@ My material:
 
 ## Jobs
 
-Put the jobs in `data/job-alerts.json`, an array of `{ title, company, location, salary, source, url }`. Only `title` and `company` are required. If a job has a `status`, only jobs with status `new` are scored; jobs without one are scored too. After a run, the jobs that were scored are marked `seen` in the jobs file; failed jobs stay `new` so the next run retries them.
+Put the jobs in `data/job-alerts.json`, an array of `{ title, company, location, salary, source, url }`. `title`, `company` and `url` are required. The `url` identifies a job: if the same `url` appears more than once, or is already `seen`, the job is scored at most once. If a job has a `status`, only jobs with status `new` are scored; jobs without one are scored too. After a run, the jobs that were scored are marked `seen` in the jobs file; failed jobs stay `new` so the next run retries them.
 
 ## Run
 
