@@ -18,18 +18,20 @@ const start = Date.now();
 
 try {
   assertProfileFiles();
-  const [profile, jobs] = await Promise.all([
+  const [profile, { jobs, repeated, alreadySeen }] = await Promise.all([
     readProfile(),
     readJobs(jobsPath),
   ]);
 
   info(
-    `Scoring ${jobs.length} jobs from ${jobsPath} (concurrency ${args.concurrency}, model ${env.AGENT_MODEL})`,
+    `Scoring ${jobs.length} jobs from ${jobsPath} (skipped ${repeated} repeated in the file, ${alreadySeen} already seen; concurrency ${args.concurrency}, model ${env.AGENT_MODEL})`,
   );
   await logEvent({
     event: "run_start",
     jobsFile: jobsPath,
     jobCount: jobs.length,
+    repeatedJobs: repeated,
+    alreadySeenJobs: alreadySeen,
     concurrency: args.concurrency,
     model: env.AGENT_MODEL,
     resumeChars: profile.resume.length,

@@ -13,19 +13,26 @@ const jobSchema = z.object({
 
 export type Job = z.infer<typeof jobSchema>;
 
-export async function readJobs(path: string): Promise<Job[]> {
+export async function readJobs(path: string) {
   const text = await readFile(path, "utf8");
   const jobs = z.array(jobSchema).parse(JSON.parse(text));
   const seenUrls = new Set(
     jobs.filter((job) => job.status === "seen").map((job) => job.url),
   );
   const newJobs: Job[] = [];
+  const queuedUrls = new Set<string>();
+  let repeated = 0;
+  let alreadySeen = 0;
   for (const job of jobs) {
-    if (job.status === "seen" || seenUrls.has(job.url)) continue;
-    seenUrls.add(job.url);
-    newJobs.push(job);
+    if (job.status === "seen") continue;
+    if (seenUrls.has(job.url)) alreadySeen++;
+    else if (queuedUrls.has(job.url)) repeated++;
+    else {
+      queuedUrls.add(job.url);
+      newJobs.push(job);
+    }
   }
-  return newJobs;
+  return { jobs: newJobs, repeated, alreadySeen };
 }
 
 export async function markJobsSeen(path: string, scoredJobs: Job[]) {
