@@ -25,6 +25,58 @@ ai-job-classifier/
 npm install
 ```
 
+## Your profile
+
+The agent scores jobs against your resume and preferences. Create both files yourself. They are gitignored, so your details stay out of the repo. The app won't start if either is missing.
+
+`profile/resume.md`:
+
+````md
+# Name
+
+Location: City, Country
+Work rights: citizen / permanent resident / visa type
+
+## Summary
+
+## Experience
+
+### Title, Company (YYYY - YYYY)
+
+- 
+
+## Skills
+
+- Languages:
+- Frameworks:
+- Cloud / infra:
+
+## Education
+````
+
+`profile/preferences.md`:
+
+````md
+# Preferences
+
+## Hard requirements
+
+- Locations:
+- Work mode (remote / hybrid / on-site):
+- Minimum salary:
+- Work rights notes:
+
+## Wanted
+
+- Target titles and seniority:
+- Preferred stack:
+- Industries or company stages:
+
+## Dealbreakers
+
+-
+````
+
 ## Evaluate
 
 From the project root, initialize the Harbor eval workspace:

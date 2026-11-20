@@ -17,3 +17,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+data/
+output/
+profile/resume.md
+profile/preferences.md
