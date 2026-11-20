@@ -2,6 +2,7 @@ import { ChatOpenRouter } from "@langchain/openrouter";
 import { defineDeepAgent } from "managed-deepagents";
 import { env } from "./env";
 import { assertProfileFiles } from "./lib/profile";
+import { logging } from "./middleware/logging";
 import { getCandidateProfile } from "./tools/get-candidate-profile";
 import { readJobs } from "./tools/read-jobs";
 import { saveScores } from "./tools/save-scores";
@@ -15,5 +16,6 @@ export const agent = defineDeepAgent({
     model: env.AGENT_MODEL,
     apiKey: env.OPENROUTER_API_KEY,
   }),
+  middleware: [logging],
   tools: [getCandidateProfile, readJobs, searchJobPosting, saveScores],
 });
