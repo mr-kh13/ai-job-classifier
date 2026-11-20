@@ -50,6 +50,28 @@ pnpm start --concurrency 5      # jobs scored at once (-c, default 3)
 
 Scores are saved to `output/<timestamp>.json`, best first. Each entry has `title`, `company`, `score`, `confidence`, `reasons` and `source_url`. `pnpm typecheck` type-checks the project.
 
+## How a job is processed
+
+Each job runs through the state machine in `src/state-machine.ts`. A step that fails sends the job to `reportingFailure`, which logs the error. The job then gets a score of 0 and is marked failed, and the run carries on with the other jobs.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> searching
+    searching --> assessing: posting found
+    assessing --> scoring: assessment done
+    scoring --> reportingScored: score built
+    reportingScored --> scored: logged
+    scored --> [*]
+
+    searching --> reportingFailure: error
+    assessing --> reportingFailure: error
+    scoring --> reportingFailure: error
+    reportingScored --> reportingFailure: error
+    reportingFailure --> failed: logged
+    failed --> [*]
+```
+
 ## How scoring works
 
 The settings are fixed in `src/scoring-config.ts`. The model marks each hard requirement `pass`, `fail` or `unknown` and gives each dimension a level. The code adds up the points.
