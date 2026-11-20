@@ -1,0 +1,22 @@
+x-agent: &agent
+  build: .
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    - OPENROUTER_API_KEY
+    - TAVILY_API_KEY
+  volumes:
+    - .:/app
+    - /app/node_modules
+
+services:
+  dev:
+    <<: *agent
+    ports:
+      - "2024:2024"
+
+  build:
+    <<: *agent
+    profiles: ["build"]
+    command: ["pnpm", "build"]

@@ -8,20 +8,24 @@ A Managed Deep Agent built with [`managed-deepagents`](https://github.com/langch
 ai-job-classifier/
   agent.ts          # defineDeepAgent(...) — required `name` is the deploy id
   instructions.md   # always-loaded system prompt
-  package.json      # project dependencies
-  .env              # API keys (LangSmith + model providers); never commit
-  AGENTS.md         # guidance for coding agents working on this project
+  env.ts            # validated environment variables
   identity.ts       # managed authentication
-  tools/            # optional custom tools
-  middleware/       # optional middleware
-  skills/           # optional skills synced to Context Hub
-  tools/mcp.ts      # optional MCP server declaration
+  tools/            # custom tools
+  lib/              # helpers shared by the tools
+  profile/          # your resume and preferences (gitignored)
+  data/             # jobs to score (gitignored)
+  output/           # saved scores (gitignored)
+  Dockerfile        # container image for the dev server and build
+  compose.yaml      # `dev` and `build` services
+  package.json      # project dependencies and scripts
+  .env              # API keys; never commit
+  AGENTS.md         # guidance for coding agents working on this project
 ```
 
 ## Install
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## Your profile
@@ -108,14 +112,32 @@ agent is deferred.
 
 ## Develop
 
-Edit `agent.ts` to configure your model, tools, and middleware, and edit
-`instructions.md` to shape the system prompt.
+Edit `agent.ts` to configure your model and tools, and edit `instructions.md` to
+shape the system prompt.
 
-Run the compiled app on the local LangGraph dev server:
+| Script | Runs | Does |
+| --- | --- | --- |
+| `pnpm dev` | `mda dev` | Local LangGraph dev server |
+| `pnpm chat` | `mda chat` | Chat with the agent in the terminal |
+| `pnpm build` | `mda build` | Compile the app to `.mda/build` without deploying |
+| `pnpm typecheck` | `tsc --noEmit` | Type-check the project |
+
+### Jobs and output
+
+Put the jobs to score in `data/job-alerts.json`, an array of
+`{ title, company, location, salary, source, url }`. Only `title` and `company` are
+required. Scores are saved to `output/<timestamp>.json`.
+
+### Run in a container
+
+`compose.yaml` runs the dev server or the build in a container. Docker and Podman both work.
 
 ```bash
-mda dev
+docker compose up dev
+docker compose --profile build run --rm build
 ```
+
+The project folder is mounted into the container, so `profile/`, `data/` and `output/` are shared with your machine. The dev server listens on port 2024. Set `OPENROUTER_API_KEY` and `TAVILY_API_KEY` in your shell or in `.env`.
 
 ## Identity
 
@@ -161,6 +183,10 @@ mda deploy --no-wait
 Deploy prints both the Agent Server URL to call and the LangSmith dashboard URL
 to inspect.
 
+The build copies gitignored folders too, so `profile/`, `data/` and `output/`
+end up in `.mda/build`. A deployment therefore carries your resume and
+preferences.
+
 ## Logs
 
 Read the deployed agent's server logs:
@@ -187,9 +213,19 @@ Agent memory and thread history are not recoverable afterwards.
 
 ## Environment
 
+`env.ts` validates these variables at startup:
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `OPENROUTER_API_KEY` | yes | OpenRouter API key |
+| `TAVILY_API_KEY` | yes | Web search for job descriptions |
+| `AGENT_MODEL` | no | OpenRouter model ID (default `anthropic/claude-haiku-5.5`) |
+| `LANGSMITH_TRACING` | no | Enable LangSmith tracing |
+| `LANGSMITH_API_KEY` | no | LangSmith key; required to deploy |
+
 `mda deploy` loads `.env`, uses `LANGSMITH_API_KEY` for LangSmith, and forwards
-model provider keys such as `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` as deployment
-secrets. Provider keys must be in `.env` or configured as LangSmith workspace
+`OPENROUTER_API_KEY` and `TAVILY_API_KEY` as deployment
+secrets. These keys must be in `.env` or configured as LangSmith workspace
 secrets — a value exported in your shell is not read. Set
 `LANGSMITH_WORKSPACE_ID` or pass `--workspace-id` if your LangSmith API key
 requires a workspace selection.
