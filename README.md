@@ -12,7 +12,6 @@ ai-job-classifier/
   .env              # API keys (LangSmith + model providers); never commit
   AGENTS.md         # guidance for coding agents working on this project
   identity.ts       # managed authentication
-  sandbox/index.ts  # managed LangSmith sandbox (delete `sandbox/` to opt out)
   tools/            # optional custom tools
   middleware/       # optional middleware
   skills/           # optional skills synced to Context Hub
@@ -130,14 +129,6 @@ This project declares no memory, so nothing is kept between runs. Add
 `memory.ts` exporting `defineMemory({ agent: memoryLayer() })` to mount one deployment-shared tree
 at `/memories/agent/`.
 
-## Sandbox
-
-`sandbox/index.ts` declares a managed LangSmith sandbox. MDA only enables the
-sandbox when this declaration is present — remove the `sandbox/` directory to
-opt out (for example for chat-only agents). Add `sandbox/setup.sh` if you want
-to provision a recipe snapshot; `mda deploy` / `mda dev` bake it once and new
-threads clone that image without re-running the script.
-
 ## Optional Runtime Pieces
 
 Add `tools/mcp.ts` to attach MCP servers. The file must expose a named `mcp`
@@ -191,8 +182,7 @@ mda delete
 ```
 
 This deletes the Agent Server, the tracing project created alongside it, the
-Context Hub repo holding this agent's context and memory, and the managed
-sandboxes this agent created. It asks first; pass `--yes` to skip the prompt.
+Context Hub repo holding this agent's context and memory. It asks first; pass `--yes` to skip the prompt.
 Agent memory and thread history are not recoverable afterwards.
 
 ## Environment
