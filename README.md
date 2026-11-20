@@ -18,9 +18,18 @@ Set these in your shell or a `.env` file. `env.ts` validates them at startup.
 
 ## Your profile
 
-Create `profile/resume.md` (any plain description of your background) and `profile/preferences.md`. Both are gitignored, and the app won't start without them.
+Create `profile/resume.md` and `profile/preferences.md`. Both are gitignored, and the app won't start without them. The model reads both files as plain text.
 
-Each bullet under `## Hard requirements` in `preferences.md` is checked separately for every job, so write one requirement per bullet, dealbreakers included. A job that breaks one is capped at a score of 30.
+`resume.md` can be any plain description of your background: summary, experience, skills, work rights and location.
+
+In `preferences.md`, write whatever you want in free text, such as roles, stack and industries. The only part the app parses is the `## Hard requirements` section:
+
+- The heading must be level 2 (`##`) and read `Hard requirements`. Case doesn't matter.
+- Write one requirement per bullet, starting with `-` or `*`, dealbreakers included. Each is checked separately for every job.
+- The section ends at the next `#` or `##` heading. Anything under it that isn't a bullet is ignored.
+- The section is optional. Without it, jobs are scored with no hard requirements.
+
+A job that breaks a hard requirement is capped at a score of 30.
 
 ```md
 # Preferences
@@ -35,6 +44,41 @@ Each bullet under `## Hard requirements` in `preferences.md` is checked separate
 - Target roles: ...
 - Preferred stack: ...
 ```
+
+<details>
+<summary>Generate both files with a chat model</summary>
+
+Paste this into any chat model, with your CV and a few lines on what you're looking for. Save its two answers as `profile/resume.md` and `profile/preferences.md`. This sends your details to that model, so use one you're comfortable sharing them with.
+
+```text
+I use a tool that scores job postings against my resume and preferences. From the material at the end, write two markdown files.
+
+File 1, resume.md: a plain description of my background: summary, experience, skills, work rights and location. Use only facts from my material. Don't invent anything.
+
+File 2, preferences.md, in this format:
+
+# Preferences
+
+## Hard requirements
+
+- <one rule per bullet>
+
+## Wanted
+
+- <target roles, preferred stack, industries, anything else I care about>
+
+Rules for preferences.md:
+- The heading must be exactly "## Hard requirements", with only "-" bullets under it.
+- A hard requirement is a dealbreaker that rules a job out. Each bullet is one rule, stated so a job clearly passes or fails it. A job that fails one is capped at a score of 30, so keep the list short.
+- Put everything that is only nice to have under "## Wanted".
+
+If anything is unclear, ask me before you write.
+
+My material:
+<paste your CV and what you're looking for>
+```
+
+</details>
 
 ## Jobs
 
