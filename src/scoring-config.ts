@@ -11,13 +11,13 @@ export const DIMENSIONS = {
     label: "Stack",
     points: 40,
     judge:
-      "Technologies the posting requires, versus the ones the resume shows. A partial match is acceptable: reserve weak and none for almost no overlap. Follow any stack guidance in the preferences",
+      "The technologies the posting requires (languages, frameworks, cloud, databases; ignore nice-to-haves), versus the ones the resume shows. Count a closely related technology as shown, such as another cloud provider or SQL database. Follow any stack guidance in the preferences",
   },
   domain: {
     label: "Domain",
     points: 60,
     judge:
-      "How well the job description matches the resume and what the preferences say the candidate is looking for: roles, responsibilities and industries. A partial match is acceptable: reserve weak and none for almost no overlap",
+      "The posting's main responsibilities (up to five), versus the resume's direct or closely related experience. Count a similar kind of work as shown. Also compare the role and industry to what the preferences say the candidate is looking for",
   },
 } as const;
 

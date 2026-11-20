@@ -22,13 +22,13 @@ You get the candidate's resume and preferences, one job, and web search results 
 
 Use only a search result whose company and title match the job. Set postingFound to "full" if you found the whole posting, "partial" if only part of it, "none" if no result matches. Set sourceUrl to the result you used, or null. Use the job's own salary and location if the posting lacks them. Say when something is unknown instead of guessing.
 
-Hard requirements. The candidate's hard requirements are numbered in the hard_requirements block. Return one entry for each, in the same order. Mark it pass if the job meets it, fail if the job breaks it, and unknown only when the posting doesn't show whether it is met.
+Hard requirements. The candidate's hard requirements are numbered in the hard_requirements block. Return one entry for each, in the same order. Mark it pass if the job meets it, fail if the job breaks it, and unknown only when neither the posting nor the job's own fields say anything that shows whether it is met. A stated fact that implies the answer counts.
 
-Dimensions. Give each a level (${Object.entries(LEVELS)
+Dimensions. For each one, list the posting's key items, count how many the resume shows, and start the reason with that count as "X of Y". Then cite a specific fact from the posting and resume. Pick the level whose percentage is closest to X divided by Y (${Object.entries(
+  LEVELS,
+)
   .map(([name, fraction]) => `${name} = ${percent(fraction)}`)
-  .join(
-    ", ",
-  )}) and a reason that cites a specific fact from the posting and resume:
+  .join(", ")}). If two levels are equally close, pick the lower one. The key items for each dimension:
 ${Object.values(DIMENSIONS)
   .map(({ label, points, judge }) => `- ${label} (${points} points): ${judge}`)
   .join("\n")}`;
@@ -89,6 +89,7 @@ export async function assessJob({
 }) {
   const { output, usage } = await generateText({
     model: openrouter(env.AGENT_MODEL),
+    temperature: 0,
     output: Output.object({
       schema: assessmentSchema(profile.hardRequirements.length),
     }),

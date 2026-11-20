@@ -14,7 +14,7 @@ Set these in your shell or a `.env` file. `env.ts` validates them at startup.
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | yes | OpenRouter API key |
 | `TAVILY_API_KEY` | yes | Web search for job descriptions |
-| `AGENT_MODEL` | no | OpenRouter model ID (default `anthropic/claude-haiku-5.5`) |
+| `AGENT_MODEL` | no | OpenRouter model ID (default `openai/gpt-6-luna`) |
 
 ## Your profile
 
@@ -125,9 +125,9 @@ The settings are fixed in `src/scoring-config.ts`. The model marks each hard req
 | Stack | 40 | The technologies the posting requires, against your resume |
 | Domain | 60 | How well the job matches your resume and what you're looking for |
 
-Partial matches are acceptable. Seniority and salary aren't scored.
+For each dimension the model counts how many of the posting's key items your resume shows ("3 of 4"), counting closely related experience, and picks the level closest to that share. Seniority and salary aren't scored.
 
-The score is the points earned divided by the points available, scaled to 100. A failed hard requirement caps it at 30. Confidence is `low` when no posting was found, `medium` when only part was found or any hard requirement is unknown, and `high` otherwise.
+The score is the points earned divided by the points available, scaled to 100. A failed hard requirement caps it at 30. Confidence is `low` when no posting was found, `medium` when only part was found, and `high` otherwise. A hard requirement the posting doesn't settle shows up in `reasons` as `unknown` but doesn't change the confidence.
 
 ## Logs
 

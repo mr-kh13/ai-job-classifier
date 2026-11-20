@@ -37,9 +37,6 @@ export function buildScoredJob({
   const rawScore = (earnedPoints / MAX_POINTS) * 100;
 
   const anyFailed = hardRequirements.some(({ status }) => status === "fail");
-  const anyUnknown = hardRequirements.some(
-    ({ status }) => status === "unknown",
-  );
 
   const dimensionReasons = dimensionKeys.map((key) => {
     const { level, reason } = dimensions[key];
@@ -56,8 +53,7 @@ export function buildScoredJob({
 
   let confidence: ScoredJob["confidence"] = "high";
   if (assessment.postingFound === "none") confidence = "low";
-  else if (assessment.postingFound === "partial" || anyUnknown)
-    confidence = "medium";
+  else if (assessment.postingFound === "partial") confidence = "medium";
 
   const score = Math.round(rawScore);
   return {
