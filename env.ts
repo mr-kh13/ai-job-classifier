@@ -8,6 +8,8 @@ export const env = createEnv({
     // Web search for job descriptions
     TAVILY_API_KEY: z.string().min(1),
     // Optional: override the default OpenRouter model ID
+    // Optional: full path to the jobs file, used when no jobs file argument is given
+    JOBS_FILE: z.string().min(1).optional(),
     AGENT_MODEL: z.string().min(1).default("openai/gpt-6-luna"),
   },
   runtimeEnv: process.env,

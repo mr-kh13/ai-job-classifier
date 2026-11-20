@@ -82,13 +82,18 @@ My material:
 
 ## Jobs
 
-Put the jobs in `data/job-alerts.json`, an array of `{ title, company, location, salary, source, url }`. Only `title` and `company` are required.
+Put the jobs in `data/job-alerts.json`, an array of `{ title, company, location, salary, source, url }`. Only `title` and `company` are required. If a job has a `status`, only jobs with status `new` are scored; jobs without one are scored too. After a run, the jobs that were scored are marked `seen` in the jobs file; failed jobs stay `new` so the next run retries them.
 
 ## Run
 
 ```bash
 pnpm start                      # data/job-alerts.json
 pnpm start my-jobs.json         # data/my-jobs.json
+```
+
+To read the jobs from anywhere else, set `JOBS_FILE` to the full path in `.env.local` (gitignored). It is used when no file argument is given.
+
+```sh
 pnpm start --concurrency 5      # jobs scored at once (-c, default 3)
 ```
 

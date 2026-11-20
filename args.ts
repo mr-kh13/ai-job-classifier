@@ -9,7 +9,7 @@ const { values, positionals } = parseArgs({
 });
 
 const argsSchema = z.object({
-  jobsFile: z.string().min(1).default("job-alerts.json"),
+  jobsFile: z.string().min(1).optional(),
   concurrency: z.coerce.number().int().min(1).default(3), // Run `x` scoring run concurrently
 });
 
