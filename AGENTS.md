@@ -1,25 +1,30 @@
 # ai-job-classifier
 
-A Managed Deep Agent. `agent.ts` defines the agent, tools live in `tools/`, the system prompt is `instructions.md`, and keys go in `.env`.
-Docs: https://docs.langchain.com/langsmith/javascript/managed-deep-agents-quickstart
+Scores a list of jobs against the user's resume and preferences and saves a ranked shortlist. TypeScript, Vercel AI SDK, OpenRouter for the model, Tavily for job postings.
 
-## Ending a session
+## Layout
 
-When you finish a task, summarize what changed with:
-
-1. What you changed, and any assumptions you made.
-2. How to run it: `mda dev`, and any `.env` keys that are still empty.
-3. Local or hosted as an option for distribution: ask outright, e.g. "Want to keep this on `mda dev` for now, or deploy it so it has a hosted URL and keeps running with your machine off?" If the feature only works deployed (e.g. GitHub or Linear channels), say so and name `mda deploy` as the next step instead. Asking is fine; deciding for the user is not.
-
-Don't run `mda deploy` unless the user asks you to. It changes hosted infrastructure and can affect billing, so it's the user's call.
+- `index.ts` is the entry point: reads the jobs, scores each one, saves `output/<timestamp>.json`. `args.ts` and `env.ts` validate the command-line arguments and environment variables.
+- `src/` holds the shortlisting logic, which is specific to this app.
+  - `scoring-config.ts` holds the fixed scoring settings (dimensions, weights, levels). It is code, not a per-run option. The prompt, the output schema and the score arithmetic all read from it.
+  - `state-machine.ts` scores one job as an XState machine: search, assess, score, then report. It exports `scoreJob`, which `index.ts` calls for each job.
+  - `search-posting.ts` finds the posting with Tavily. `assess-job.ts` holds the prompt and output schema and asks the model for an assessment. `build-scored-job.ts` turns the assessment into a score in code.
+  - `jobs.ts`, `profile.ts` and `save-scores.ts` read and write the app's own files.
+- `src/utils/` holds generic helpers (`paths`, `log`, `map-limit`) that know nothing about jobs. `src` may import from `utils`, never the reverse.
+- `profile/resume.md` and `profile/preferences.md` hold the user's details. `data/`, `output/` and `logs/` are runtime folders. All of these are gitignored.
 
 ## Commands
 
-- `npm install` installs dependencies.
-- `mda dev` runs the agent locally with LangGraph Studio.
-- `mda deploy` creates or updates a hosted deployment on LangSmith. The first deployment is free. Additional deployments are billed on the Plus plan; on the free plan, `mda deploy` stops with a message instead of charging.
-- `mda --help` lists the other commands, such as `chat`, `logs`, `channels`, `connections`, `evals`, and `delete`.
+- `pnpm install` installs dependencies.
+- `pnpm start [jobs-file]` scores the jobs in `data/` (default `job-alerts.json`).
+- `pnpm typecheck` type-checks the project.
+- Keys come from the environment: `bws run -- pnpm start`, or a `.env` file. `env.ts` validates them at startup.
 
-## Local vs deployed
+## Conventions
 
-A deployment has a hosted Agent Server URL that teammates and other services can call, and it stays up when the developer's machine is off. GitHub and Linear channels only receive events from a deployment. Schedules run on the local dev server while `mda dev` is up; a deployment keeps them running as crons.
+- No comments unless essential. Prefer clear names.
+- Never commit or log-share the profile, `data/`, `output/` or `logs/`. They contain personal details.
+
+## Ending a session
+
+When you finish a task, summarize what changed, any assumptions you made, and how to run it, including any keys that are still empty.

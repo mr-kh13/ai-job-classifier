@@ -1,9 +1,0 @@
-node_modules
-.git
-.mda
-.langgraph_api
-.env
-data
-output
-profile
-logs

@@ -1,239 +1,78 @@
 # ai-job-classifier
 
-A Managed Deep Agent built with [`managed-deepagents`](https://github.com/langchain-ai/managed-deepagents-sdk).
+Scores a list of jobs against your resume and preferences, and saves a ranked shortlist. For each job it searches the web for the posting (Tavily), asks a model (OpenRouter, through the Vercel AI SDK) to assess the fit, and calculates the score in code.
 
-## Project structure
-
-```text
-ai-job-classifier/
-  agent.ts          # defineDeepAgent(...) — required `name` is the deploy id
-  instructions.md   # always-loaded system prompt
-  env.ts            # validated environment variables
-  identity.ts       # managed authentication
-  tools/            # custom tools
-  lib/              # helpers shared by the tools
-  profile/          # your resume and preferences (gitignored)
-  data/             # jobs to score (gitignored)
-  output/           # saved scores (gitignored)
-  Dockerfile        # container image for the dev server and build
-  compose.yaml      # `dev` and `build` services
-  package.json      # project dependencies and scripts
-  .env              # API keys; never commit
-  AGENTS.md         # guidance for coding agents working on this project
-```
-
-## Install
+## Setup
 
 ```bash
 pnpm install
 ```
 
-## Your profile
-
-The agent scores jobs against your resume and preferences. Create both files yourself. They are gitignored, so your details stay out of the repo. The app won't start if either is missing.
-
-`profile/resume.md`:
-
-````md
-# Name
-
-Location: City, Country
-Work rights: citizen / permanent resident / visa type
-
-## Summary
-
-## Experience
-
-### Title, Company (YYYY - YYYY)
-
-- 
-
-## Skills
-
-- Languages:
-- Frameworks:
-- Cloud / infra:
-
-## Education
-````
-
-`profile/preferences.md`:
-
-````md
-# Preferences
-
-## Hard requirements
-
-- Locations:
-- Work mode (remote / hybrid / on-site):
-- Minimum salary:
-- Work rights notes:
-
-## Wanted
-
-- Target titles and seniority:
-- Preferred stack:
-- Industries or company stages:
-
-## Dealbreakers
-
--
-````
-
-## Evaluate
-
-From the project root, initialize the Harbor eval workspace:
-
-```bash
-mda evals init -i
-```
-
-Follow the coding-agent prompt to author tasks directly under `evals/<task>/`. The CLI
-creates `evals/harbor-job.json` once and preserves your edits; `.mda/evals/` is generated.
-
-A task may include an authored `evals/<task>/identity.json` fixture. It requires a
-non-empty `user.id`; `user.kind`, `user.email`, and top-level `groups`, `claims`, and
-`source.provider` are optional. Keep the fixture with the task, not in generated
-`.mda/evals/`.
-
-Running evals requires `uv` and Docker. Export `LANGSMITH_API_KEY`,
-`LANGSMITH_WORKSPACE_ID` when your credentials require it, and the model or tool
-credential variables used by the agent. Then run the pinned two-plugin Harbor command
-included at the end of the coding-agent prompt from the project root. It uses POSIX
-syntax on macOS/Linux and PowerShell on native Windows. `MDAJobPlugin` compiles a fresh
-eval artifact at every Harbor job start. From the same project root, inspect results:
-
-```bash
-uv run --python 3.12 --with 'harbor[langsmith]==0.21.0' harbor view .mda/evals/jobs
-```
-
-This POC keeps MDA's custom Harbor adapter. Migration to Harbor's built-in LangGraph
-agent is deferred.
-
-## Develop
-
-Edit `agent.ts` to configure your model and tools, and edit `instructions.md` to
-shape the system prompt.
-
-| Script | Runs | Does |
-| --- | --- | --- |
-| `pnpm dev` | `mda dev` | Local LangGraph dev server |
-| `pnpm chat` | `mda chat` | Chat with the agent in the terminal |
-| `pnpm build` | `mda build` | Compile the app to `.mda/build` without deploying |
-| `pnpm typecheck` | `tsc --noEmit` | Type-check the project |
-
-### Jobs and output
-
-Put the jobs to score in `data/job-alerts.json`, an array of
-`{ title, company, location, salary, source, url }`. Only `title` and `company` are
-required. Scores are saved to `output/<timestamp>.json`.
-
-### Run in a container
-
-`compose.yaml` runs the dev server or the build in a container. Docker and Podman both work.
-
-```bash
-docker compose up dev
-docker compose --profile build run --rm build
-```
-
-The project folder is mounted into the container, so `profile/`, `data/` and `output/` are shared with your machine. The dev server listens on port 2024. Set `OPENROUTER_API_KEY` and `TAVILY_API_KEY` in your shell or in `.env`.
-
-## Identity
-
-`identity.ts` enables managed authentication: threads are owned
-per caller. Set `auth` to one or more `auth.*` entries if browsers call
-the Agent Server directly. Durable memory is declared separately.
-
-## Memory
-
-This project declares no memory, so nothing is kept between runs. Add
-`memory.ts` exporting `defineMemory({ agent: memoryLayer() })` to mount one deployment-shared tree
-at `/memories/agent/`.
-
-## Optional Runtime Pieces
-
-Add `tools/mcp.ts` to attach MCP servers. The file must expose a named `mcp`
-declaration.
-
-## Deploy
-
-Compile and deploy the project to LangSmith:
-
-```bash
-mda deploy
-```
-
-This copies your files verbatim, generates a managed entry module, and writes a
-deployable build (including `langgraph.json`) to `.mda/build`. The CLI uploads
-that build to LangSmith to run your agent on the managed runtime.
-
-The Agent Server type defaults to `serverless`. Use `--agent-server-type dedicated`
-for a dedicated Agent Server. Serverless requires a supported GCP SaaS environment.
-The old `--deployment-type` spelling remains a hidden compatibility alias.
-
-Common options:
-
-```bash
-mda deploy --name ai-job-classifier-dev --agent-server-type serverless
-mda deploy --workspace-id "$LANGSMITH_WORKSPACE_ID"
-mda deploy --no-wait
-```
-
-Deploy prints both the Agent Server URL to call and the LangSmith dashboard URL
-to inspect.
-
-The build copies gitignored folders too, so `profile/`, `data/` and `output/`
-end up in `.mda/build`. A deployment therefore carries your resume and
-preferences.
-
-## Logs
-
-Read the deployed agent's server logs:
-
-```bash
-mda logs
-mda logs --lines 200 --level error
-```
-
-In a terminal this streams new output until you press Ctrl-C. When the output is
-piped or redirected it prints the most recent lines (1000 by default) and exits.
-
-## Delete
-
-Remove the Agent Server and the LangSmith resources it created:
-
-```bash
-mda delete
-```
-
-This deletes the Agent Server, the tracing project created alongside it, the
-Context Hub repo holding this agent's context and memory. It asks first; pass `--yes` to skip the prompt.
-Agent memory and thread history are not recoverable afterwards.
-
-## Environment
-
-`env.ts` validates these variables at startup:
+Set these in your shell or a `.env` file. `env.ts` validates them at startup.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | yes | OpenRouter API key |
 | `TAVILY_API_KEY` | yes | Web search for job descriptions |
 | `AGENT_MODEL` | no | OpenRouter model ID (default `anthropic/claude-haiku-5.5`) |
-| `LANGSMITH_TRACING` | no | Enable LangSmith tracing |
-| `LANGSMITH_API_KEY` | no | LangSmith key; required to deploy |
 
-`mda deploy` loads `.env`, uses `LANGSMITH_API_KEY` for LangSmith, and forwards
-`OPENROUTER_API_KEY` and `TAVILY_API_KEY` as deployment
-secrets. These keys must be in `.env` or configured as LangSmith workspace
-secrets — a value exported in your shell is not read. Set
-`LANGSMITH_WORKSPACE_ID` or pass `--workspace-id` if your LangSmith API key
-requires a workspace selection.
+## Your profile
 
-To keep separate settings per environment, pass `--env-file` to `mda dev`,
-`mda chat`, `mda deploy`, `mda delete`, `mda logs` or `mda connections` in
-place of `.env`:
+Create `profile/resume.md` (any plain description of your background) and `profile/preferences.md`. Both are gitignored, and the app won't start without them.
+
+Each bullet under `## Hard requirements` in `preferences.md` is checked separately for every job, so write one requirement per bullet, dealbreakers included. A job that breaks one is capped at a score of 30.
+
+```md
+# Preferences
+
+## Hard requirements
+
+- Work rights: skip jobs that require permanent residency or citizenship.
+- Dealbreaker: no on-call rotation.
+
+## Wanted
+
+- Target roles: ...
+- Preferred stack: ...
+```
+
+## Jobs
+
+Put the jobs in `data/job-alerts.json`, an array of `{ title, company, location, salary, source, url }`. Only `title` and `company` are required.
+
+## Run
 
 ```bash
-mda deploy --agent-environment staging --env-file .env.staging
+pnpm start                      # data/job-alerts.json
+pnpm start my-jobs.json         # data/my-jobs.json
+pnpm start --concurrency 5      # jobs scored at once (-c, default 3)
 ```
+
+Scores are saved to `output/<timestamp>.json`, best first. Each entry has `title`, `company`, `score`, `confidence`, `reasons` and `source_url`. `pnpm typecheck` type-checks the project.
+
+## How scoring works
+
+The settings are fixed in `src/scoring-config.ts`. The model marks each hard requirement `pass`, `fail` or `unknown` and gives each dimension a level. The code adds up the points.
+
+| Dimension | Points | Judges |
+| --- | --- | --- |
+| Stack | 40 | The technologies the posting requires, against your resume |
+| Domain | 60 | How well the job matches your resume and what you're looking for |
+
+Partial matches are acceptable. Seniority and salary aren't scored.
+
+The score is the points earned divided by the points available, scaled to 100. A failed hard requirement caps it at 30. Confidence is `low` when no posting was found, `medium` when only part was found or any hard requirement is unknown, and `high` otherwise.
+
+## Logs
+
+The console prints one line per job (score, confidence, time, tokens) and a final summary. The same run is written to `logs/<date>.jsonl`, one JSON object per line, each with a `runId` shared by the run.
+
+| Event | When | Notable fields |
+| --- | --- | --- |
+| `run_start` | The run begins | jobs file, job count, concurrency, model |
+| `job_scored` | A job was scored | score, confidence, `searchMs`, `assessMs`, token usage, search results, assessment |
+| `job_failed` | A job could not be scored | `stage` (`search`, `assess` or `score`) and the error |
+| `run_end` | The run finishes | scored and failed counts, token totals, duration, output file |
+| `run_failed` | The run stops early | the error |
+
+The logs contain your resume details and job postings, so don't share them.

@@ -9,9 +9,6 @@ export const env = createEnv({
     TAVILY_API_KEY: z.string().min(1),
     // Optional: override the default OpenRouter model ID
     AGENT_MODEL: z.string().min(1).default("anthropic/claude-haiku-5.5"),
-    // Optional LangSmith tracing
-    LANGSMITH_TRACING: z.stringbool().optional(),
-    LANGSMITH_API_KEY: z.string().min(1).optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
